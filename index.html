@@ -157,7 +157,7 @@ try{data=JSON.parse(localStorage.getItem(LS)||'{}');q=JSON.parse(localStorage.ge
 const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.setItem(LQ,JSON.stringify(q))}catch(e){}};
 const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
 let busy=false;
-async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'rset',rec:JSON.stringify(r),tok:tk});if(rq[id]===r)delete rq[id]}rlocal();for(const id of Object.keys(bq)){const r=bq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'bset',rec:JSON.stringify(r),tok:tk});if(bq[id]===r)delete bq[id]}blocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
+async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'rset',rec:JSON.stringify(r),tok:tk});if(rq[id]===r)delete rq[id]}rlocal();for(const id of Object.keys(bq)){const r=bq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'bset',rec:JSON.stringify(r),tok:tk});if(bq[id]===r)delete bq[id]}blocal();online=true;loadNote=''}catch(e){if(e.message==='auth'){online=true;loadNote='لازم تدخل الرقم السري عشان ينحفظ التقييم';busy=false;local();if(owner==='parents'&&!padCb)openPad('أكّد الرقم السري',()=>flush());render();return}online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
 async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}try{const k=await call({action:'rlist'});const nR={};for(const r of k.rows)if(KIDS[r.kid])nR[r.id]=r;for(const id in rq)nR[id]=rq[id];R=nR;rlocal()}catch(e){}try{const k=await call({action:'blist'});const nB={};for(const r of k.rows)if(KIDS[r.kid])nB[r.kid+'_'+r.day]=r;for(const id in bq)nB[id]=bq[id];B=nB;blocal()}catch(e){}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
 function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
 if(!API)loadNote='الحفظ على هذا الجهاز فقط';
@@ -285,6 +285,7 @@ ${wk.ch.map(c=>`<div class="ch ${c.won?'won':''}"><span class="ico">${chIcon(c)}
 return `<div class="rw2"><span class="ico">${giftIcon(w.ic)}</span><span><span class="t">${w.t}</span><br><span class="c">${w.cost} نقطة</span></span>${pend?'<span class="tag pending">بالانتظار</span>':can?`<button class="btn" data-rw="${w.id}">أبيها!</button>`:`<span class="tag rejected">باقي ${w.cost-bl}</span>`}<span class="pb"><i style="width:${Math.min(100,Math.round(Math.max(0,bl)/w.cost*100))}%"></i></span></div>`}).join('')}</div>
 ${reqs(id).length?`<div class="grid" style="margin-top:10px"><h3 style="font-size:17px">طلباتي</h3>${reqs(id).slice(0,5).map(r=>`<div class="req"><span class="gr">${r.t} · ${r.cost} نقطة</span><span class="tag ${r.st}">${ST_AR[r.st]}</span></div>`).join('')}</div>`:''}
 <details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>السلوك الطيب: نقاط يعطيك إياها بابا وماما كل يوم</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
+<p style="text-align:center;margin:14px 0 0"><button class="btn ghost" data-refresh>تحديث النقاط ↻</button></p>
 <p class="note">الأسبوع يبدأ الأحد${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
 
 function parents(){const now=Date.now(),today=prayerDay(now);document.documentElement.style.setProperty('--k','#1d2433');
@@ -303,6 +304,7 @@ return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22p
 <p style="margin:0 0 6px;font-size:13px;color:var(--soft)">آخر ٧ أيام: ${ws.on} من 35 في وقتها (${pct}%) · تحديات هالأسبوع: ${weekStats(id,weekStart(today)).ch.filter(c=>c.won).map(c=>c.t).join('، ')||'لسا'}</p><table><thead><tr><th></th>${PR.map(p=>`<th>${p.n}</th>`).join('')}</tr></thead><tbody>
 ${days.map((d,i)=>{const r=rec(id,d);return `<tr><td>${i===0?'اليوم':i===1?'أمس':dayName(d).w}</td>${PR.map(p=>`<td><i class="d ${r[p.k]||''}" title="${r[p.k]==='on'?'في وقتها':r[p.k]==='late'?'بعد وقتها':'—'}"></i></td>`).join('')}</tr>`}).join('')}
 </tbody></table></div>`}).join('')}
+<p style="text-align:center;margin:14px 0 0"><button class="btn ghost" data-refresh>تحديث ↻</button></p>
 <p class="note">اضغط على اسم أي واحد تفتح صفحته وتقدر تعدّل عليها · ${online?'متصل — يتحدث كل دقيقة من أجهزة العيال':loadNote||'جاري التحميل…'}</p>`}
 
 function render(){if(sheet.classList.contains('open'))return;app.innerHTML=view==='home'?home():view==='parents'?parents():kidView(view)}
@@ -336,6 +338,7 @@ function toastLock(pk,s){const b=app.querySelector(`[data-p="${pk}"] .st`);if(b)
 function burst(){const b=document.getElementById('burst');b.innerHTML=[...Array(14)].map((_,i)=>{const a=i/14*Math.PI*2,r=120+Math.random()*80;return `<i style="left:50%;top:55%;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px">${star()}</i>`}).join('');setTimeout(()=>b.innerHTML='',1100)}
 app.addEventListener('click',e=>{const ow=e.target.closest('[data-own]');if(ow){const id=ow.dataset.own;openPad(id==='parents'?'جهاز الوالدين':'جهاز '+KIDS[id].n,()=>{setOwner(id);location.hash='';route()});return}
 if(e.target.closest('[data-gear]')){openPad('تغيير صاحب الجهاز',()=>{setOwner(null);location.hash='';route()});return}
+const rf=e.target.closest('[data-refresh]');if(rf){rf.textContent='جاري التحديث…';sync();return}
 const bh=e.target.closest('[data-bh]');if(bh&&owner==='parents'&&KIDS[view]){btoggle(view,shift(prayerDay(Date.now()),-off),bh.dataset.bh);return}
 const rb=e.target.closest('[data-rw]');if(rb){askReward(rb.dataset.rw);return}
 const ap=e.target.closest('[data-ap],[data-rj]');if(ap&&owner==='parents'){const r=R[ap.dataset.ap||ap.dataset.rj];if(r)rsave({...r,st:ap.dataset.ap?'approved':'rejected'});return}
@@ -349,6 +352,7 @@ addEventListener('hashchange',route);
 setInterval(()=>{if(!sheet.classList.contains('open'))render()},30000);
 route();
 sync();setInterval(sync,60000);
+{let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}if(owner==='parents'&&!tk)setTimeout(()=>{if(!padCb)openPad('أكّد الرقم السري',()=>sync())},800)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 }
 </script>
