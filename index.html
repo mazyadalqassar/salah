@@ -176,7 +176,7 @@ function totalPts(kid){const weeks=new Set();for(const id in data){const r=data[
 function level(t){let i=0;while(i+1<LEVELS.length&&t>=LEVELS[i+1][0])i++;const nx=LEVELS[i+1];return{name:LEVELS[i][1],next:nx,pct:nx?Math.round((t-LEVELS[i][0])/(nx[0]-LEVELS[i][0])*100):100}}
 const chIcon=c=>c.id==='fajr'?icon('fajr').replace('class="ic"','width="44" height="44"'):`<span style="width:30px;height:30px">${star(c.ic)}</span>`;
 // متجر الجوائز — أضف جوائز جديدة هنا
-const REWARDS=[{id:'icecream',t:'طلعة آيس كريم',cost:300,ic:'#ff8fab'},{id:'toy',t:'لعبة',cost:1000,ic:'#2f6fdb'}];
+const REWARDS=[{id:'snack',t:'بطاط شيبس أو كاكاو',opts:['بطاط شيبس','كاكاو'],cost:100,ic:'#e48a17'},{id:'icecream',t:'طلعة آيس كريم',cost:300,ic:'#ff8fab'},{id:'dinner',t:'عشاء من المطعم',cost:500,ic:'#1f9d55'},{id:'toy',t:'لعبة',cost:1000,ic:'#2f6fdb'}];
 let R={},rq={};try{R=JSON.parse(localStorage.getItem('salah-r')||'{}');rq=JSON.parse(localStorage.getItem('salah-rq')||'{}')}catch(e){}
 const rlocal=()=>{try{localStorage.setItem('salah-r',JSON.stringify(R));localStorage.setItem('salah-rq',JSON.stringify(rq))}catch(e){}};
 const spent=kid=>Object.values(R).filter(r=>r.kid===kid&&(r.st==='pending'||r.st==='approved')).reduce((a,r)=>a+(+r.cost||0),0);
@@ -251,7 +251,7 @@ return `<div class="pts"><div><b>${bl}</b><small>نقاطي${spent(id)?' · جم
 <div class="sec">تحديات هالأسبوع<span>هالأسبوع: ${wk.pts+wk.bonus} نقطة</span></div>
 ${wk.ch.map(c=>`<div class="ch ${c.won?'won':''}"><span class="ico">${chIcon(c)}</span><span><span class="t">${c.won?'✓ ':''}${c.t}</span><br><span class="d2">${c.d} · ${c.val}/${c.goal}</span></span><span class="rw">+${c.rw}</span><span class="pb"><i style="width:${Math.round(c.val/c.goal*100)}%"></i></span></div>`).join('')}`})()}
 <div class="sec">متجر الجوائز<span>رصيدي: ${balance(id)} نقطة</span></div>
-<div class="shop">${REWARDS.map(w=>{const bl=balance(id),pend=reqs(id).some(r=>(r.rw===w.id||r.t===w.t)&&r.st==='pending'),can=bl>=w.cost;
+<div class="shop">${REWARDS.map(w=>{const bl=balance(id),pend=reqs(id).some(r=>(r.rw===w.id||r.t===w.t||(w.opts||[]).includes(r.t))&&r.st==='pending'),can=bl>=w.cost;
 return `<div class="rw2"><span class="ico">${giftIcon(w.ic)}</span><span><span class="t">${w.t}</span><br><span class="c">${w.cost} نقطة</span></span>${pend?'<span class="tag pending">بالانتظار</span>':can?`<button class="btn" data-rw="${w.id}">أبيها!</button>`:`<span class="tag rejected">باقي ${w.cost-bl}</span>`}<span class="pb"><i style="width:${Math.min(100,Math.round(Math.max(0,bl)/w.cost*100))}%"></i></span></div>`}).join('')}</div>
 ${reqs(id).length?`<div class="grid" style="margin-top:10px"><h3 style="font-size:17px">طلباتي</h3>${reqs(id).slice(0,5).map(r=>`<div class="req"><span class="gr">${r.t} · ${r.cost} نقطة</span><span class="tag ${r.st}">${ST_AR[r.st]}</span></div>`).join('')}</div>`:''}
 <details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
@@ -290,7 +290,7 @@ function closeSheet(){sheet.classList.remove('open');pending=null;padCb=null;rwA
 let rwAsk=null;
 function askReward(wid){const w=REWARDS.find(x=>x.id===wid);if(!w||balance(view)<w.cost)return;closeSheet();rwAsk=w;
 sheetIn.innerHTML=`<div style="width:64px;height:64px;margin:0 auto;display:grid;place-items:center">${giftIcon(w.ic)}</div><h2 style="text-align:center">تبي ${w.t}؟</h2><p style="text-align:center">بنصرف ${w.cost} نقطة من رصيدك (${balance(view)})، وبابا وماما لازم يوافقون.</p>
-<button class="opt o1 sug" data-rc="yes"><span>إيه أبيها!</span></button><button class="opt clr" data-rc="no">لا، بعدين</button>`;sheet.classList.add('open')}
+${w.opts?w.opts.map((o,i)=>`<button class="opt o1 ${i?'':'sug'}" data-rc="o${i}"><span>أبي ${o}!</span></button>`).join(''):'<button class="opt o1 sug" data-rc="yes"><span>إيه أبيها!</span></button>'}<button class="opt clr" data-rc="no">لا، بعدين</button>`;sheet.classList.add('open')}
 let padCb=null,padBuf='',padTitle='';
 function openPad(title,cb){closeSheet();padCb=cb;padBuf='';padTitle=title;drawPad();sheet.classList.add('open')}
 function drawPad(bad,msg){padBusyFlag=false;sheetIn.innerHTML=`<h2 style="text-align:center">${padTitle}</h2><p style="text-align:center;${msg?'color:#c0392b;font-weight:800':''}">${msg||'الرقم السري للوالدين'}</p>
@@ -309,7 +309,7 @@ const rb=e.target.closest('[data-rw]');if(rb){askReward(rb.dataset.rw);return}
 const ap=e.target.closest('[data-ap],[data-rj]');if(ap&&owner==='parents'){const r=R[ap.dataset.ap||ap.dataset.rj];if(r)rsave({...r,st:ap.dataset.ap?'approved':'rejected'});return}
 const b=e.target.closest('[data-p]');if(b){openSheet(b.dataset.p);return}
 if(e.target.closest('#prev')&&off<6){off++;render()}if(e.target.closest('#nextd')&&off>0){off--;render()}});
-sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const rc=e.target.closest('[data-rc]');if(rc&&rwAsk){const w=rwAsk;closeSheet();if(rc.dataset.rc==='yes'){rsave({id:view+'-'+Date.now().toString(36),kid:view,rw:w.id,t:w.t,cost:w.cost,st:'pending',at:nowStr()});burst()}render();return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
+sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const rc=e.target.closest('[data-rc]');if(rc&&rwAsk){const w=rwAsk;closeSheet();const ch=rc.dataset.rc;if(ch==='yes'||ch[0]==='o'){const t=ch[0]==='o'?w.opts[+ch.slice(1)]:w.t;rsave({id:view+'-'+Date.now().toString(36),kid:view,rw:w.id,t,cost:w.cost,st:'pending',at:nowStr()});burst()}render();return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
 const v=o.dataset.v,{day,pk}=pending;closeSheet();
 if(v!=='x'){const cur={...rec(view,day),kid:view,day};if(v)cur[pk]=v;else delete cur[pk];save(view,day,cur);if(v==='on')burst();setTimeout(()=>checkWins(view),900)}
 render()});
