@@ -109,6 +109,11 @@ button.kid{width:100%;text-align:start}
 .tag{font-size:13px;font-weight:800;border-radius:10px;padding:2px 10px;white-space:nowrap}.tag.pending{background:#fde7c3;color:#8a5a00}.tag.approved{background:#d4f2df;color:#13703a}.tag.rejected{background:var(--line);color:var(--soft)}
 .bal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .bal div{border-radius:20px;padding:12px;color:#fff;text-align:center}.bal b{display:block;font-size:30px;line-height:1.1}.bal span{font-size:15px;font-weight:800}.bal small{display:block;font-size:12px;opacity:.9}
+.beh{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:6px 14px}
+.bh{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:start;padding:9px 0;border-top:1px solid var(--line);min-height:54px}
+.bh:first-child{border-top:0}.bh .bx{width:36px;height:36px;border-radius:12px;border:3px dashed var(--line);display:grid;place-items:center}
+.bh.on .bx{background:var(--on);border:0}.bh .nm2{font-weight:800;font-size:16px;line-height:1.25}.bh .pp{font-weight:800;color:var(--late);font-size:14px;white-space:nowrap}
+.bh:not(.on) .nm2{color:var(--soft)}.bh.on .pp{color:var(--on)}
 .kpts{font-size:14px;font-weight:800;color:var(--ink)}
 .burst{position:fixed;pointer-events:none;inset:0;z-index:9}
 .burst i{position:absolute;width:26px;height:26px;animation:fly 1s ease-out forwards}
@@ -152,8 +157,8 @@ try{data=JSON.parse(localStorage.getItem(LS)||'{}');q=JSON.parse(localStorage.ge
 const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.setItem(LQ,JSON.stringify(q))}catch(e){}};
 const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
 let busy=false;
-async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'rset',rec:JSON.stringify(r),tok:tk});if(rq[id]===r)delete rq[id]}rlocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
-async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}try{const k=await call({action:'rlist'});const nR={};for(const r of k.rows)if(KIDS[r.kid])nR[r.id]=r;for(const id in rq)nR[id]=rq[id];R=nR;rlocal()}catch(e){}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
+async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'rset',rec:JSON.stringify(r),tok:tk});if(rq[id]===r)delete rq[id]}rlocal();for(const id of Object.keys(bq)){const r=bq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'bset',rec:JSON.stringify(r),tok:tk});if(bq[id]===r)delete bq[id]}blocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
+async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}try{const k=await call({action:'rlist'});const nR={};for(const r of k.rows)if(KIDS[r.kid])nR[r.id]=r;for(const id in rq)nR[id]=rq[id];R=nR;rlocal()}catch(e){}try{const k=await call({action:'blist'});const nB={};for(const r of k.rows)if(KIDS[r.kid])nB[r.kid+'_'+r.day]=r;for(const id in bq)nB[id]=bq[id];B=nB;blocal()}catch(e){}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
 function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
 if(!API)loadNote='الحفظ على هذا الجهاز فقط';
 const sync=async()=>{await flush();await pull()};
@@ -166,15 +171,37 @@ const CH=[
  {id:'full',t:'الأسبوع الذهبي',d:'كل الصلوات في وقتها ٧ أيام',goal:35,rw:100,v:w=>w.on,ic:'#f5b301'},
  {id:'fajr',t:'بطل الفجر',d:'الفجر في وقته ٥ أيام',goal:5,rw:30,v:w=>w.fajr,ic:'#1f3a66'},
  {id:'days',t:'يوم كامل',d:'٣ أيام كاملة في وقتها',goal:3,rw:20,v:w=>w.full,ic:'#1f9d55'},
- {id:'all',t:'ولا صلاة فاتت',d:'صلّ الـ٣٥ صلاة كلها',goal:35,rw:20,v:w=>w.prayed,ic:'#e48a17'}];
+ {id:'all',t:'ولا صلاة فاتت',d:'صلّ الـ٣٥ صلاة كلها',goal:35,rw:20,v:w=>w.prayed,ic:'#e48a17'},
+ {id:'beh',t:'نجم الأخلاق',d:'٢٠ سلوك طيب بالأسبوع',goal:20,rw:40,v:w=>w.beh,ic:'#ff8fab'},
+ {id:'sleep',t:'بطل النوم',d:'النوم بدري ٥ ليالي',goal:5,rw:25,v:w=>w.sleep,ic:'#7a3b69'},
+ {id:'perfect',t:'الأسبوع المثالي',d:'كل يوم صلاة في وقتها وسلوك طيب',goal:7,rw:50,v:w=>w.both,ic:'#0f8b8d'}];
 const dow=key=>{const[y,m,d]=key.split('-').map(Number);return new Date(Date.UTC(y,m-1,d)).getUTCDay()};
 const weekStart=key=>shift(key,-dow(key)); // الأسبوع يبدأ الأحد
 function dayPts(r){let s=0,n=0;for(const p of PR){const v=r[p.k];if(v==='on'){s+=POINTS.on+(p.k==='fajr'?POINTS.fajrBonus:0);n++}else if(v==='late')s+=POINTS.late}return s+(n===5?POINTS.fullDay:0)}
-function weekStats(kid,ws){const w={on:0,fajr:0,full:0,prayed:0,pts:0};for(let i=0;i<7;i++){const r=rec(kid,shift(ws,i));let n=0;for(const p of PR){if(r[p.k])w.prayed++;if(r[p.k]==='on'){w.on++;n++;if(p.k==='fajr')w.fajr++}}if(n===5)w.full++;w.pts+=dayPts(r)}
+function weekStats(kid,ws){const w={on:0,fajr:0,full:0,prayed:0,pts:0,beh:0,sleep:0,both:0};for(let i=0;i<7;i++){const dd=shift(ws,i),r=rec(kid,dd),bb=brec(kid,dd);w.beh+=bb.length;if(bb.includes('sleep'))w.sleep++;w.pts+=bPts(kid,dd);let n=0;for(const p of PR){if(r[p.k])w.prayed++;if(r[p.k]==='on'){w.on++;n++;if(p.k==='fajr')w.fajr++}}if(n===5)w.full++;if(n>0&&bb.length)w.both++;w.pts+=dayPts(r)}
 w.ch=CH.map(c=>({...c,val:Math.min(c.goal,c.v(w)),won:c.v(w)>=c.goal}));w.bonus=w.ch.filter(c=>c.won).reduce((a,c)=>a+c.rw,0);return w}
-function totalPts(kid){const weeks=new Set();for(const id in data){const r=data[id];if(r&&r.kid===kid&&r.day)weeks.add(weekStart(r.day))}let t=0;for(const ws of weeks){const w=weekStats(kid,ws);t+=w.pts+w.bonus}return t}
+function totalPts(kid){const weeks=new Set();for(const id in data){const r=data[id];if(r&&r.kid===kid&&r.day)weeks.add(weekStart(r.day))}for(const id in B){const r=B[id];if(r&&r.kid===kid&&r.day)weeks.add(weekStart(r.day))}let t=0;for(const ws of weeks){const w=weekStats(kid,ws);t+=w.pts+w.bonus}return t}
 function level(t){let i=0;while(i+1<LEVELS.length&&t>=LEVELS[i+1][0])i++;const nx=LEVELS[i+1];return{name:LEVELS[i][1],next:nx,pct:nx?Math.round((t-LEVELS[i][0])/(nx[0]-LEVELS[i][0])*100):100}}
 const chIcon=c=>c.id==='fajr'?icon('fajr').replace('class="ic"','width="44" height="44"'):`<span style="width:30px;height:30px">${star(c.ic)}</span>`;
+// السلوكيات الطيبة — أضف أو عدّل من هنا (النقاط لكل يوم)
+const BEH=[
+ {id:'sleep',t:'النوم بدري في موعده',p:5},
+ {id:'wake',t:'الصحوة للمدرسة بدون مشاكل',p:5},
+ {id:'club',t:'الذهاب للنادي بدون إزعاج',p:5},
+ {id:'swim',t:'السباحة أو الرياضة',p:5},
+ {id:'bath',t:'الاستحمام عند الطلب',p:3},
+ {id:'teeth',t:'تنظيف الأسنان صبح وليل',p:3},
+ {id:'room',t:'ترتيب الغرفة والأغراض',p:3},
+ {id:'homework',t:'الواجب بدون تذكير',p:5},
+ {id:'obey',t:'السمع والطاعة لبابا وماما',p:5},
+ {id:'siblings',t:'التعامل الطيب مع الإخوان',p:5},
+ {id:'quran',t:'قراءة أو حفظ قرآن',p:5},
+ {id:'screen',t:'الالتزام بوقت الجهاز',p:5}];
+let B={},bq={};try{B=JSON.parse(localStorage.getItem('salah-b')||'{}');bq=JSON.parse(localStorage.getItem('salah-bq')||'{}')}catch(e){}
+const blocal=()=>{try{localStorage.setItem('salah-b',JSON.stringify(B));localStorage.setItem('salah-bq',JSON.stringify(bq))}catch(e){}};
+const brec=(kid,day)=>(B[kid+'_'+day]||{}).b||[];
+const bPts=(kid,day)=>brec(kid,day).reduce((a,id)=>a+((BEH.find(x=>x.id===id)||{}).p||0),0);
+function btoggle(kid,day,id){const cur=brec(kid,day),b=cur.includes(id)?cur.filter(x=>x!==id):[...cur,id];const r={kid,day,b,names:b.map(i=>(BEH.find(x=>x.id===i)||{}).t||i),pts:0};B[kid+'_'+day]=r;r.pts=bPts(kid,day);bq[kid+'_'+day]=r;blocal();render();flush()}
 // متجر الجوائز — أضف جوائز جديدة هنا
 const REWARDS=[{id:'snack',t:'بطاط شيبس أو كاكاو',opts:['بطاط شيبس','كاكاو'],cost:100,ic:'#e48a17'},{id:'icecream',t:'طلعة آيس كريم',cost:300,ic:'#ff8fab'},{id:'dinner',t:'عشاء من المطعم',cost:500,ic:'#1f9d55'},{id:'toy',t:'لعبة',cost:1000,ic:'#2f6fdb'}];
 let R={},rq={};try{R=JSON.parse(localStorage.getItem('salah-r')||'{}');rq=JSON.parse(localStorage.getItem('salah-rq')||'{}')}catch(e){}
@@ -248,13 +275,16 @@ return `<div class="top">${owner==='parents'?'<a class="back" href="#parents" ar
 <div class="${K.big?'big':''}">${cards}</div>
 ${(()=>{const t=totalPts(id),L=level(t),wk=weekStats(id,weekStart(today)),bl=balance(id);
 return `<div class="pts"><div><b>${bl}</b><small>نقاطي${spent(id)?' · جمعت '+t+' وصرفت '+spent(id):''}</small></div><div class="lv">${L.name}<br><small>${L.next?'باقي '+(L.next[0]-t)+' لـ'+L.next[1]:'أعلى مستوى!'}</small></div><div class="bar"><i style="width:${L.pct}%"></i></div></div>
+<div class="sec">${owner==='parents'?'قيّموا سلوك '+K.n:'سلوكياتي'} ${off===0?'اليوم':off===1?'أمس':dn.w}<span>${bPts(id,day)} نقطة</span></div>
+<div class="beh">${BEH.map(b=>{const on=brec(id,day).includes(b.id);return `<${owner==='parents'?'button':'div'} class="bh ${on?'on':''}" ${owner==='parents'?`data-bh="${b.id}"`:''}><span class="bx">${on?tick:''}</span><span class="nm2">${b.t}</span><span class="pp">+${b.p}</span></${owner==='parents'?'button':'div'}>`}).join('')}</div>
+<p class="note" style="margin-top:6px">${owner==='parents'?'اضغطوا على السلوك عشان تعطونه النقاط أو تشيلونها · غيّروا اليوم من الأسهم فوق':'بابا وماما يعطونك نقاط السلوك الطيب كل يوم'}</p>
 <div class="sec">تحديات هالأسبوع<span>هالأسبوع: ${wk.pts+wk.bonus} نقطة</span></div>
 ${wk.ch.map(c=>`<div class="ch ${c.won?'won':''}"><span class="ico">${chIcon(c)}</span><span><span class="t">${c.won?'✓ ':''}${c.t}</span><br><span class="d2">${c.d} · ${c.val}/${c.goal}</span></span><span class="rw">+${c.rw}</span><span class="pb"><i style="width:${Math.round(c.val/c.goal*100)}%"></i></span></div>`).join('')}`})()}
 <div class="sec">متجر الجوائز<span>رصيدي: ${balance(id)} نقطة</span></div>
 <div class="shop">${REWARDS.map(w=>{const bl=balance(id),pend=reqs(id).some(r=>(r.rw===w.id||r.t===w.t||(w.opts||[]).includes(r.t))&&r.st==='pending'),can=bl>=w.cost;
 return `<div class="rw2"><span class="ico">${giftIcon(w.ic)}</span><span><span class="t">${w.t}</span><br><span class="c">${w.cost} نقطة</span></span>${pend?'<span class="tag pending">بالانتظار</span>':can?`<button class="btn" data-rw="${w.id}">أبيها!</button>`:`<span class="tag rejected">باقي ${w.cost-bl}</span>`}<span class="pb"><i style="width:${Math.min(100,Math.round(Math.max(0,bl)/w.cost*100))}%"></i></span></div>`}).join('')}</div>
 ${reqs(id).length?`<div class="grid" style="margin-top:10px"><h3 style="font-size:17px">طلباتي</h3>${reqs(id).slice(0,5).map(r=>`<div class="req"><span class="gr">${r.t} · ${r.cost} نقطة</span><span class="tag ${r.st}">${ST_AR[r.st]}</span></div>`).join('')}</div>`:''}
-<details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
+<details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>السلوك الطيب: نقاط يعطيك إياها بابا وماما كل يوم</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
 <p class="note">الأسبوع يبدأ الأحد${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
 
 function parents(){const now=Date.now(),today=prayerDay(now);document.documentElement.style.setProperty('--k','#1d2433');
@@ -269,6 +299,7 @@ ${old.map(r=>`<div class="req"><span class="gr">${KIDS[r.kid].n} · ${r.t} · ${
 <div class="legend"><span><i class="d on"></i>في وقتها</span><span><i class="d late"></i>بعد وقتها</span><span><i class="d"></i>ما انحطت</span></div>
 ${Object.entries(KIDS).map(([id,K])=>{const ws=weekStars(id,today),pct=Math.round(ws.on/35*100);
 return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22px;font-weight:800">${K.n} ‹</a><span class="kpts">${totalPts(id)} نقطة · ${level(totalPts(id)).name}</span></h3>
+<a href="#${id}" class="btn" style="display:inline-flex;align-items:center;margin:4px 0 8px;text-decoration:none">قيّم سلوك اليوم (${brec(id,today).length}/${BEH.length}) ‹</a>
 <p style="margin:0 0 6px;font-size:13px;color:var(--soft)">آخر ٧ أيام: ${ws.on} من 35 في وقتها (${pct}%) · تحديات هالأسبوع: ${weekStats(id,weekStart(today)).ch.filter(c=>c.won).map(c=>c.t).join('، ')||'لسا'}</p><table><thead><tr><th></th>${PR.map(p=>`<th>${p.n}</th>`).join('')}</tr></thead><tbody>
 ${days.map((d,i)=>{const r=rec(id,d);return `<tr><td>${i===0?'اليوم':i===1?'أمس':dayName(d).w}</td>${PR.map(p=>`<td><i class="d ${r[p.k]||''}" title="${r[p.k]==='on'?'في وقتها':r[p.k]==='late'?'بعد وقتها':'—'}"></i></td>`).join('')}</tr>`}).join('')}
 </tbody></table></div>`}).join('')}
@@ -305,6 +336,7 @@ function toastLock(pk,s){const b=app.querySelector(`[data-p="${pk}"] .st`);if(b)
 function burst(){const b=document.getElementById('burst');b.innerHTML=[...Array(14)].map((_,i)=>{const a=i/14*Math.PI*2,r=120+Math.random()*80;return `<i style="left:50%;top:55%;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px">${star()}</i>`}).join('');setTimeout(()=>b.innerHTML='',1100)}
 app.addEventListener('click',e=>{const ow=e.target.closest('[data-own]');if(ow){const id=ow.dataset.own;openPad(id==='parents'?'جهاز الوالدين':'جهاز '+KIDS[id].n,()=>{setOwner(id);location.hash='';route()});return}
 if(e.target.closest('[data-gear]')){openPad('تغيير صاحب الجهاز',()=>{setOwner(null);location.hash='';route()});return}
+const bh=e.target.closest('[data-bh]');if(bh&&owner==='parents'&&KIDS[view]){btoggle(view,shift(prayerDay(Date.now()),-off),bh.dataset.bh);return}
 const rb=e.target.closest('[data-rw]');if(rb){askReward(rb.dataset.rw);return}
 const ap=e.target.closest('[data-ap],[data-rj]');if(ap&&owner==='parents'){const r=R[ap.dataset.ap||ap.dataset.rj];if(r)rsave({...r,st:ap.dataset.ap?'approved':'rejected'});return}
 const b=e.target.closest('[data-p]');if(b){openSheet(b.dataset.p);return}
