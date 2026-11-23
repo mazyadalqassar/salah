@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="صلاتي نور">
+<meta name="theme-color" content="#f6efe2">
+<title>صلاتي نور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm, encouraging, made for kids 5–12 and checked by a parent
+   IDEA: a sky dial — each prayer is a moment of the sun's daily path, like a sticker chart on the fridge
+   PICTURE: the sky arc on top with the sun at its current position, then five big prayer cards
+   COLOUR and TYPE: sand ground, deep night blue, each child has their own colour; Baloo Bhaijaan 2
+   LAYOUT: one column, max 560px, big touch targets; parents view is a ruled week grid */
+:root{color-scheme:light dark;--bg:light-dark(#f6efe2,#0f1a2b);--card:light-dark(#fffaf1,#17243a);--ink:light-dark(#1d2433,#f1ead9);--soft:light-dark(#6b6457,#a9b2c2);--line:light-dark(#e6dcc8,#2a3a55);--on:#1f9d55;--late:#e48a17;--k:#0f8b8d;--sky1:light-dark(#bfe3f5,#132a4d);--sky2:light-dark(#fde7c3,#1d3560)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Baloo Bhaijaan 2",system-ui,sans-serif;overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,a:focus-visible{outline:3px solid var(--k);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.top h1{font-size:30px;line-height:1.05;margin:0;flex:1}
+.back{width:44px;height:44px;border-radius:14px;background:var(--card);border:2px solid var(--line);display:grid;place-items:center}
+.sky{position:relative;border-radius:26px;background:linear-gradient(180deg,var(--sky1),var(--sky2)) top/100% 84% no-repeat,light-dark(#e9d3a6,#0b1424);overflow:hidden;height:180px;margin-bottom:14px}
+.sky svg{position:absolute;inset:0;width:100%;height:100%}
+.sky .lbl{position:absolute;top:12px;inset-inline-start:16px;font-weight:700;font-size:15px;color:light-dark(#20304d,#e9e1cc)}
+.sky .nxt{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--card);border-radius:14px;padding:4px 12px;font-size:15px;font-weight:700}
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 12px}
+.daynav button{width:44px;height:44px;border-radius:50%;background:var(--card);border:2px solid var(--line);font-size:22px;font-weight:800}
+.daynav button:disabled{opacity:.3;cursor:default}
+.daynav b{font-size:19px;text-align:center}.daynav small{display:block;color:var(--soft);font-size:13px;font-weight:500}
+.p{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;text-align:start;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:12px 14px;margin-bottom:10px;min-height:84px;transition:transform .15s}
+.p:active{transform:scale(.98)}
+.p .ic{width:56px;height:56px}
+.p .nm{font-size:22px;font-weight:800;line-height:1.1}
+.p .tm{color:var(--soft);font-size:15px;white-space:nowrap}
+.p .st{font-size:14px;font-weight:700;text-align:center;white-space:nowrap}
+.p.now{border-color:var(--k);box-shadow:0 0 0 4px color-mix(in srgb,var(--k) 22%,transparent)}
+.p.lock{opacity:.55}
+.p.on{border-color:var(--on);background:color-mix(in srgb,var(--on) 10%,var(--card))}
+.p.late{border-color:var(--late);background:color-mix(in srgb,var(--late) 10%,var(--card))}
+.chk{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin:0 auto 2px;border:3px dashed var(--line)}
+.on .chk{background:var(--on);border:0}.late .chk{background:var(--late);border:0}
+.score{display:flex;gap:10px;margin:14px 0}
+.score div{flex:1;background:var(--k);color:#fff;border-radius:20px;padding:10px 14px}
+.score b{font-size:30px;line-height:1;display:block}.score span{font-size:14px}
+.sheet{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:5}
+.sheet.open{display:flex}
+.sheet .in{background:var(--card);width:100%;max-width:560px;border-radius:28px 28px 0 0;padding:20px 16px 28px}
+.sheet h2{margin:0 0 4px;font-size:26px;line-height:1.1}.sheet p{margin:0 0 14px;color:var(--soft);font-size:15px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;border-radius:20px;padding:14px;margin-bottom:10px;border:3px solid var(--line);font-size:20px;font-weight:800;text-align:start;min-height:72px}
+.opt.o1{color:var(--on)}.opt.o2{color:var(--late)}
+.opt.sug{border-color:currentColor;background:color-mix(in srgb,currentColor 10%,transparent)}
+.opt small{display:block;font-size:14px;font-weight:500;color:var(--soft)}
+.opt.clr{font-size:16px;color:var(--soft);min-height:52px;justify-content:center;border-style:dashed}
+.kids{display:grid;gap:12px;margin-top:8px}
+.kid{display:flex;align-items:center;gap:14px;background:var(--kc);color:#fff;border-radius:26px;padding:16px 18px;font-size:28px;font-weight:800;min-height:96px;text-decoration:none}
+.kid .av{width:62px;height:62px;border-radius:50%;background:#fff3;display:grid;place-items:center;font-size:30px}
+.kid small{display:block;font-size:15px;font-weight:500;opacity:.9}
+.kid.par{background:var(--card);color:var(--ink);border:2px solid var(--line);font-size:22px;min-height:72px}
+.note{font-size:13px;color:var(--soft);margin-top:14px;text-align:center}
+.grid{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:14px;margin-bottom:14px}
+.grid h3{margin:0 0 6px;font-size:22px;display:flex;justify-content:space-between;align-items:baseline}
+.grid h3 span{font-size:14px;color:var(--soft);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:700;color:var(--soft);padding:4px 2px;font-size:13px}
+td{text-align:center;padding:5px 2px;border-top:1px solid var(--line)}
+td:first-child{text-align:start;white-space:nowrap}
+.d{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--line);vertical-align:middle}
+.d.on{background:var(--on)}.d.late{background:var(--late)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--soft);margin-bottom:12px}
+.legend .d{width:14px;height:14px;margin-inline-end:4px}
+.big .p{min-height:104px}.big .p .nm{font-size:28px}.big .p .ic{width:66px;height:66px}.big .p{grid-template-columns:66px minmax(0,1fr) auto}
+.pad{direction:ltr;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto}
+.pad button{height:64px;border-radius:20px;background:var(--bg);border:2px solid var(--line);font-size:28px;font-weight:800}
+.dots{display:flex;gap:14px;justify-content:center;margin:6px 0 18px}.dots i{width:18px;height:18px;border-radius:50%;border:3px solid var(--ink)}.dots i.f{background:var(--ink)}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.gear{width:44px;height:44px;border-radius:14px;background:var(--card);border:2px solid var(--line);display:grid;place-items:center;color:var(--soft)}
+button.kid{width:100%;text-align:start}
+.burst{position:fixed;pointer-events:none;inset:0;z-index:9}
+.burst i{position:absolute;width:26px;height:26px;animation:fly 1s ease-out forwards}
+@keyframes fly{from{transform:translate(0,0) scale(.4);opacity:1}to{transform:translate(var(--x),var(--y)) scale(1.2) rotate(200deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.burst{display:none}.p{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+<div class="burst" id="burst"></div>
+<script>
+{
+const KIDS={mona:{n:'منى',c:'#0f8b8d',g:'الصف السادس',a:'م'},hamad:{n:'حمد',c:'#2f6fdb',g:'الصف الثالث',a:'ح'},reem:{n:'ريم',c:'#e2557b',g:'روضة — كي جي ٢',a:'ر',big:1}};
+const PR=[{k:'fajr',n:'الفجر'},{k:'dhuhr',n:'الظهر'},{k:'asr',n:'العصر'},{k:'maghrib',n:'المغرب'},{k:'isha',n:'العشاء'}];
+const LAT=29.3759,LNG=47.9774,TZ=3,H=3600e3;
+const rad=d=>d*Math.PI/180,deg=r=>r*180/Math.PI,fix=(a,b)=>{a-=b*Math.floor(a/b);return a<0?a+b:a};
+function sun(jd){const D=jd-2451545,g=fix(357.529+.98560028*D,360),q=fix(280.459+.98564736*D,360),L=fix(q+1.915*Math.sin(rad(g))+.02*Math.sin(rad(2*g)),360),e=23.439-.00000036*D,RA=fix(deg(Math.atan2(Math.cos(rad(e))*Math.sin(rad(L)),Math.cos(rad(L))))/15,24);return{decl:deg(Math.asin(Math.sin(rad(e))*Math.sin(rad(L)))),eqt:q/15-RA}}
+function jul(y,m,d){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5}
+const cache={};
+function times(key){if(cache[key])return cache[key];const[y,m,d]=key.split('-').map(Number);const jd=jul(y,m,d)-LNG/360,mid=t=>fix(12-sun(jd+t).eqt,24),ang=(a,t,ccw)=>{const s=sun(jd+t),T=deg(Math.acos((-Math.sin(rad(a))-Math.sin(rad(s.decl))*Math.sin(rad(LAT)))/(Math.cos(rad(s.decl))*Math.cos(rad(LAT)))))/15;return mid(t)+(ccw?-T:T)},asr=t=>{const s=sun(jd+t);return ang(-deg(Math.atan(1/(1+Math.tan(rad(Math.abs(LAT-s.decl)))))),t,false)};
+const base=Date.UTC(y,m-1,d)-TZ*H,hs=[ang(18,5/24,true),ang(.833,6/24,true),mid(.5)+1/60,asr(13/24),ang(.833,18/24,false),ang(17.5,18/24,false)].map(x=>base+(x+TZ-LNG/15)*H);
+return cache[key]={fajr:hs[0],sunrise:hs[1],dhuhr:hs[2],asr:hs[3],maghrib:hs[4],isha:hs[5]}}
+const keyOf=ms=>{const k=new Date(ms+TZ*H);return k.getUTCFullYear()+'-'+String(k.getUTCMonth()+1).padStart(2,'0')+'-'+String(k.getUTCDate()).padStart(2,'0')};
+const shift=(key,n)=>{const[y,m,d]=key.split('-').map(Number);return keyOf(Date.UTC(y,m-1,d)-TZ*H+12*H+n*24*H)};
+function prayerDay(now){const k=keyOf(now);return now<times(k).fajr?shift(k,-1):k}
+function windows(key){const t=times(key),nf=times(shift(key,1)).fajr;return{fajr:[t.fajr,t.sunrise],dhuhr:[t.dhuhr,t.asr],asr:[t.asr,t.maghrib],maghrib:[t.maghrib,t.isha],isha:[t.isha,nf]}}
+const fmt=ms=>{const k=new Date(ms+TZ*H);let h=k.getUTCHours();const m=String(k.getUTCMinutes()).padStart(2,'0'),ap=h<12?'ص':'م';h=h%12||12;return h+':'+m+' '+ap};
+const dur=ms=>{const m=Math.max(1,Math.round(ms/6e4)),h=Math.floor(m/60);return h?h+' س '+(m%60)+' د':m+' دقيقة'};
+const dayName=key=>{const[y,m,d]=key.split('-').map(Number),dt=new Date(Date.UTC(y,m-1,d,12));try{return{w:dt.toLocaleDateString('ar',{weekday:'long',timeZone:'UTC'}),g:dt.toLocaleDateString('ar-KW-u-nu-latn',{day:'numeric',month:'long',timeZone:'UTC'}),h:dt.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',timeZone:'UTC'})}}catch(e){return{w:key,g:'',h:''}}};
+
+/* ---------- storage: Google Sheets ---------- */
+// الصق هنا رابط تطبيق الويب من Apps Script (ينتهي بـ /exec)
+const API='https://script.google.com/macros/s/AKfycbzXT7ePiDUD2ZjQQivIknCqXwnj1UDXLE47VXqvGVU8D5qdTGVeuM6VHbJjbOOkto8b/exec';
+const KEY='5f98fc9ca5c29325';
+// الرقم السري للوالدين (٤ أرقام) — يُستخدم لإعداد الأجهزة وتغييرها
+const PARENT_PIN='5151';
+let data={},online=false,loadNote='';
+const LS='salah-v1',LQ='salah-q';
+let q={};
+try{data=JSON.parse(localStorage.getItem(LS)||'{}');q=JSON.parse(localStorage.getItem(LQ)||'{}')}catch(e){}
+const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.setItem(LQ,JSON.stringify(q))}catch(e){}};
+const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
+let busy=false;
+async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
+async function pull(){if(!API)return;try{const j=await call({action:'all',since:shift(prayerDay(Date.now()),-30)});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render()}
+function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
+if(!API)loadNote='الحفظ على هذا الجهاز فقط';
+const sync=async()=>{await flush();await pull()};
+
+/* ---------- drawing ---------- */
+const star=(c='#f5b301')=>`<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z" fill="${c}"/></svg>`;
+const stars=(n,c)=>`<span style="display:inline-flex;gap:2px">${[...Array(n)].map(()=>`<span style="width:20px;height:20px">${star(c)}</span>`).join('')}</span>`;
+const tick='<svg viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function icon(k){const g={fajr:`<rect y="38" width="64" height="26" fill="#f2a65a"/><circle cx="32" cy="40" r="13" fill="#ffd166"/><rect y="40" width="64" height="24" fill="#3a5a8c"/><path d="M0 40h64" stroke="#ffe3a3" stroke-width="2"/>`,
+dhuhr:`<circle cx="32" cy="32" r="13" fill="#ffc83d"/>${[0,45,90,135,180,225,270,315].map(a=>`<path d="M32 10v-6" stroke="#ffb020" stroke-width="4" stroke-linecap="round" transform="rotate(${a} 32 32)"/>`).join('')}`,
+asr:`<circle cx="40" cy="26" r="12" fill="#ffb347"/><path d="M8 50h48" stroke="#c9a46a" stroke-width="4" stroke-linecap="round"/><path d="M18 50l10-14 8 14" fill="#8fb36a"/>`,
+maghrib:`<circle cx="32" cy="40" r="15" fill="#ff7b54"/><rect y="40" width="64" height="24" fill="#7a3b69"/><path d="M6 46h52M14 52h36" stroke="#f4a28c" stroke-width="2.5" stroke-linecap="round"/>`,
+isha:`<path d="M38 12a20 20 0 1 0 14 34A16 16 0 1 1 38 12z" fill="#ffe08a"/><path d="M18 14l1.6 3.4 3.6.4-2.7 2.4.8 3.6L18 22l-3.3 1.8.8-3.6-2.7-2.4 3.6-.4z" fill="#fff4c2"/>`}[k];
+const bg={fajr:'#1f3a66',dhuhr:'#8fd0f2',asr:'#f7d9a0',maghrib:'#3e2550',isha:'#152340'}[k];
+return `<svg class="ic" viewBox="0 0 64 64"><defs><clipPath id="c${k}"><rect width="64" height="64" rx="18"/></clipPath></defs><g clip-path="url(#c${k})"><rect width="64" height="64" fill="${bg}"/>${g}</g></svg>`}
+function skySvg(day,now){const t=times(day),W=400,x0=44,x1=356,span=t.maghrib-t.sunrise;
+const at=f=>[x0+(x1-x0)*(1-f),150-110*Math.sin(Math.PI*f)];
+const pts=PR.map(p=>p.k==='fajr'?[x1+28,150,1]:p.k==='isha'?[x0-28,150,1]:[...at((t[p.k]-t.sunrise)/span),0]);
+const sx=now>t.sunrise&&now<t.maghrib?at((now-t.sunrise)/span):null;
+return `<svg viewBox="0 0 ${W} 180" preserveAspectRatio="xMidYMid meet"><path d="M${x0} 150 Q ${W/2} -70 ${x1} 150" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>
+<rect y="150" width="${W}" height="30" style="fill:light-dark(#e9d3a6,#0b1424)"/>
+${sx?`<circle cx="${sx[0]}" cy="${sx[1]}" r="22" fill="#ffd34d" opacity=".35"/><circle cx="${sx[0]}" cy="${sx[1]}" r="14" fill="#ffc83d"/>`:`<path d="M300 40a16 16 0 1 0 12 26a13 13 0 1 1-12-26z" fill="#ffe08a"/>`}
+${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#fff" stroke="var(--k)" stroke-width="3"/><text x="${p[0]+(PR[i].k==='fajr'?8:PR[i].k==='isha'?-8:0)}" y="${p[2]?p[1]+24:p[1]-12}" text-anchor="${PR[i].k==='fajr'?'start':PR[i].k==='isha'?'end':'middle'}" font-size="14" font-weight="700" style="fill:light-dark(#20304d,#e9e1cc)" font-family="Baloo Bhaijaan 2,sans-serif">${PR[i].n}</text>`).join('')}</svg>`}
+
+/* ---------- views ---------- */
+let view='home',off=0;
+const app=document.getElementById('app'),sheet=document.getElementById('sheet'),sheetIn=document.getElementById('sheetIn');
+let owner=null;try{owner=localStorage.getItem('salah-owner')}catch(e){}
+const setOwner=o=>{owner=o;try{o?localStorage.setItem('salah-owner',o):localStorage.removeItem('salah-owner')}catch(e){}};
+function route(){const h=location.hash.slice(1);view=!owner?'home':owner==='parents'?(KIDS[h]?h:'parents'):owner;off=0;closeSheet();render();scrollTo(0,0)}
+const rec=(kid,day)=>data[kid+'_'+day]||{};
+const pts=v=>v==='on'?2:v==='late'?1:0;
+function weekStars(kid,today){let s=0,on=0;for(let i=0;i<7;i++){const r=rec(kid,shift(today,-i));for(const p of PR){s+=pts(r[p.k]);if(r[p.k]==='on')on++}}return{s,on}}
+
+function home(){return `<div class="top"><h1>صلاتي نور</h1></div>
+<div class="sky">${skySvg(prayerDay(Date.now()),Date.now())}</div>
+<p style="margin:0;font-size:21px;font-weight:800">هذا الجهاز لمين؟</p>
+<p style="margin:0 0 8px;color:var(--soft);font-size:15px">بابا أو ماما يختارون مرة وحدة بالرقم السري، وبعدها الجهاز يفتح على صفحة صاحبه على طول.</p>
+<div class="kids">${Object.entries(KIDS).map(([id,k])=>`<button class="kid" data-own="${id}" style="--kc:${k.c}"><span class="av">${k.a}</span><span>${k.n}<small>${k.g}</small></span></button>`).join('')}
+<button class="kid par" data-own="parents"><span class="av" style="background:var(--line);font-size:22px;color:var(--ink)">و</span><span>جهاز الوالدين<small style="color:var(--soft)">متابعة الأسبوع لكل العيال</small></span></button></div>
+<p class="note">أوقات الصلاة تقريبية حسب مدينة الكويت</p>`}
+
+function kidView(id){const K=KIDS[id],now=Date.now(),today=prayerDay(now),day=shift(today,-off),w=windows(day),r=rec(id,day),dn=dayName(day),ws=weekStars(id,today);
+document.documentElement.style.setProperty('--k',K.c);
+let next=null;if(!off)for(const p of PR){if(w[p.k][0]>now){next=p;break}}
+const cards=PR.map(p=>{const[s,e]=w[p.k],v=r[p.k],locked=s>now,cur=!off&&s<=now&&now<e;
+let st,cls='';
+if(v==='on'){cls='on';st=`<div class="chk">${tick}</div>${K.big?stars(2):'في وقتها'}`}
+else if(v==='late'){cls='late';st=`<div class="chk">${tick}</div>${K.big?stars(1,'#e48a17'):'بعد وقتها'}`}
+else if(locked){cls='lock';st=`<div class="chk"></div>${K.big?'':'بعد '+dur(s-now)}`}
+else if(cur){cls='now';st=`<div class="chk" style="border-color:var(--k)"></div>${K.big?'الحين!':'حان وقتها!'}`}
+else st=`<div class="chk"></div>${K.big?'':'صليتها؟'}`;
+return `<button class="p ${cls}" data-p="${p.k}" ${locked?'aria-disabled="true"':''}>${icon(p.k)}<span><span class="nm">${p.n}</span><br><span class="tm">${fmt(s)}${K.big?'':' — '+fmt(e)}</span></span><span class="st">${st}</span></button>`}).join('');
+const done=PR.filter(p=>r[p.k]).length;
+return `<div class="top">${owner==='parents'?'<a class="back" href="#parents" aria-label="رجوع"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></a>':''}<h1 style="color:var(--k)">صلاة ${K.n}</h1>${owner==='parents'?'':'<button class="gear" data-gear aria-label="الإعدادات"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>'}</div>
+<div class="sky">${skySvg(day,off?0:now)}${next?`<span class="nxt">${next.n} بعد ${dur(w[next.k][0]-now)}</span>`:''}</div>
+<div class="daynav"><button id="prev" ${off>=6?'disabled':''} aria-label="اليوم اللي قبل">›</button><b>${off===0?'اليوم':off===1?'أمس':dn.w}<small>${dn.h} · ${dn.g}</small><small>صليت ${done} من 5</small></b><button id="nextd" ${off===0?'disabled':''} aria-label="اليوم اللي بعد">‹</button></div>
+<div class="${K.big?'big':''}">${cards}</div>
+<div class="score"><div><b>${ws.s}</b><span>نجومي هالأسبوع</span></div><div style="background:var(--on)"><b>${ws.on}</b><span>صلاة في وقتها</span></div></div>
+<p class="note">في وقتها = نجمتين · بعد وقتها = نجمة${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
+
+function parents(){const now=Date.now(),today=prayerDay(now);document.documentElement.style.setProperty('--k','#1d2433');
+const days=[...Array(7)].map((_,i)=>shift(today,-i));
+return `<div class="top"><h1>متابعة الأسبوع</h1><button class="gear" data-gear aria-label="الإعدادات"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button></div>
+<div class="legend"><span><i class="d on"></i>في وقتها</span><span><i class="d late"></i>بعد وقتها</span><span><i class="d"></i>ما انحطت</span></div>
+${Object.entries(KIDS).map(([id,K])=>{const ws=weekStars(id,today),pct=Math.round(ws.on/35*100);
+return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22px;font-weight:800">${K.n} ‹</a><span>${ws.on} من 35 في وقتها (${pct}%) · ${ws.s} نجمة</span></h3>
+<table><thead><tr><th></th>${PR.map(p=>`<th>${p.n}</th>`).join('')}</tr></thead><tbody>
+${days.map((d,i)=>{const r=rec(id,d);return `<tr><td>${i===0?'اليوم':i===1?'أمس':dayName(d).w}</td>${PR.map(p=>`<td><i class="d ${r[p.k]||''}" title="${r[p.k]==='on'?'في وقتها':r[p.k]==='late'?'بعد وقتها':'—'}"></i></td>`).join('')}</tr>`}).join('')}
+</tbody></table></div>`}).join('')}
+<p class="note">اضغط على اسم أي واحد تفتح صفحته وتقدر تعدّل عليها · ${online?'متصل — يتحدث كل دقيقة من أجهزة العيال':loadNote||'جاري التحميل…'}</p>`}
+
+function render(){if(sheet.classList.contains('open'))return;app.innerHTML=view==='home'?home():view==='parents'?parents():kidView(view)}
+
+/* ---------- marking ---------- */
+let pending=null;
+function openSheet(pk){const K=KIDS[view],now=Date.now(),day=shift(prayerDay(now),-off),[s,e]=windows(day)[pk];
+if(s>now){toastLock(pk,s);return}
+const v=rec(view,day)[pk],sug=off===0&&now<e?'on':'late',p=PR.find(x=>x.k===pk);pending={day,pk};
+sheetIn.innerHTML=`<h2>صلاة ${p.n}</h2><p>${K.big?'متى صليتي؟':'وقتها من '+fmt(s)+' إلى '+fmt(e)}</p>
+<button class="opt o1 ${sug==='on'?'sug':''}" data-v="on"><span style="width:44px;height:44px">${star()}</span><span>صليتها في وقتها<small>قبل ${fmt(e)}</small></span></button>
+<button class="opt o2 ${sug==='late'?'sug':''}" data-v="late"><span style="width:44px;height:44px">${star('#e48a17')}</span><span>صليتها بعد وقتها<small>بعد ما طلع الوقت</small></span></button>
+${v?'<button class="opt clr" data-v="">شيل العلامة</button>':''}<button class="opt clr" data-v="x">إلغاء</button>`;
+sheet.classList.add('open')}
+function closeSheet(){sheet.classList.remove('open');pending=null;padCb=null}
+let padCb=null,padBuf='',padTitle='';
+function openPad(title,cb){closeSheet();padCb=cb;padBuf='';padTitle=title;drawPad();sheet.classList.add('open')}
+function drawPad(bad){sheetIn.innerHTML=`<h2 style="text-align:center">${padTitle}</h2><p style="text-align:center">الرقم السري للوالدين</p>
+<div class="dots ${bad?'shake':''}">${[0,1,2,3].map(i=>`<i class="${i<padBuf.length?'f':''}"></i>`).join('')}</div>
+<div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="x" style="font-size:16px">إلغاء</button><button data-k="0">0</button><button data-k="d" style="font-size:20px">⌫</button></div>`}
+function padKey(k){if(k==='x'){closeSheet();render();return}if(k==='d'){padBuf=padBuf.slice(0,-1);drawPad();return}
+padBuf+=k;if(padBuf.length<4){drawPad();return}
+if(padBuf===PARENT_PIN){const cb=padCb;closeSheet();cb()}else{padBuf='';drawPad(true)}}
+function toastLock(pk,s){const b=app.querySelector(`[data-p="${pk}"] .st`);if(b){b.textContent='باقي '+dur(s-Date.now());setTimeout(render,1800)}}
+function burst(){const b=document.getElementById('burst');b.innerHTML=[...Array(14)].map((_,i)=>{const a=i/14*Math.PI*2,r=120+Math.random()*80;return `<i style="left:50%;top:55%;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px">${star()}</i>`}).join('');setTimeout(()=>b.innerHTML='',1100)}
+app.addEventListener('click',e=>{const ow=e.target.closest('[data-own]');if(ow){const id=ow.dataset.own;openPad(id==='parents'?'جهاز الوالدين':'جهاز '+KIDS[id].n,()=>{setOwner(id);location.hash='';route()});return}
+if(e.target.closest('[data-gear]')){openPad('تغيير صاحب الجهاز',()=>{setOwner(null);location.hash='';route()});return}
+const b=e.target.closest('[data-p]');if(b){openSheet(b.dataset.p);return}
+if(e.target.closest('#prev')&&off<6){off++;render()}if(e.target.closest('#nextd')&&off>0){off--;render()}});
+sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
+const v=o.dataset.v,{day,pk}=pending;closeSheet();
+if(v!=='x'){const cur={...rec(view,day),kid:view,day};if(v)cur[pk]=v;else delete cur[pk];save(view,day,cur);if(v==='on')burst()}
+render()});
+addEventListener('hashchange',route);
+setInterval(()=>{if(!sheet.classList.contains('open'))render()},30000);
+route();
+sync();setInterval(sync,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+}
+</script>
+</body>
+</html>
