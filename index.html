@@ -145,8 +145,6 @@ const dayName=key=>{const[y,m,d]=key.split('-').map(Number),dt=new Date(Date.UTC
 // الصق هنا رابط تطبيق الويب من Apps Script (ينتهي بـ /exec)
 const API='https://script.google.com/macros/s/AKfycbzXT7ePiDUD2ZjQQivIknCqXwnj1UDXLE47VXqvGVU8D5qdTGVeuM6VHbJjbOOkto8b/exec';
 const KEY='5f98fc9ca5c29325';
-// الرقم السري للوالدين (٤ أرقام) — يُستخدم لإعداد الأجهزة وتغييرها
-const PARENT_PIN='5151';
 let data={},online=false,loadNote='';
 const LS='salah-v1',LQ='salah-q';
 let q={};
@@ -154,7 +152,7 @@ try{data=JSON.parse(localStorage.getItem(LS)||'{}');q=JSON.parse(localStorage.ge
 const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.setItem(LQ,JSON.stringify(q))}catch(e){}};
 const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
 let busy=false;
-async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];await call({action:'rset',rec:JSON.stringify(r)});if(rq[id]===r)delete rq[id]}rlocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
+async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];let tk='';try{tk=localStorage.getItem('salah-tok')||''}catch(e){}await call({action:'rset',rec:JSON.stringify(r),tok:tk});if(rq[id]===r)delete rq[id]}rlocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
 async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}try{const k=await call({action:'rlist'});const nR={};for(const r of k.rows)if(KIDS[r.kid])nR[r.id]=r;for(const id in rq)nR[id]=rq[id];R=nR;rlocal()}catch(e){}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
 function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
 if(!API)loadNote='الحفظ على هذا الجهاز فقط';
@@ -295,12 +293,14 @@ sheetIn.innerHTML=`<div style="width:64px;height:64px;margin:0 auto;display:grid
 <button class="opt o1 sug" data-rc="yes"><span>إيه أبيها!</span></button><button class="opt clr" data-rc="no">لا، بعدين</button>`;sheet.classList.add('open')}
 let padCb=null,padBuf='',padTitle='';
 function openPad(title,cb){closeSheet();padCb=cb;padBuf='';padTitle=title;drawPad();sheet.classList.add('open')}
-function drawPad(bad){sheetIn.innerHTML=`<h2 style="text-align:center">${padTitle}</h2><p style="text-align:center">الرقم السري للوالدين</p>
+function drawPad(bad,msg){padBusyFlag=false;sheetIn.innerHTML=`<h2 style="text-align:center">${padTitle}</h2><p style="text-align:center;${msg?'color:#c0392b;font-weight:800':''}">${msg||'الرقم السري للوالدين'}</p>
 <div class="dots ${bad?'shake':''}">${[0,1,2,3].map(i=>`<i class="${i<padBuf.length?'f':''}"></i>`).join('')}</div>
 <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="x" style="font-size:16px">إلغاء</button><button data-k="0">0</button><button data-k="d" style="font-size:20px">⌫</button></div>`}
-function padKey(k){if(k==='x'){closeSheet();render();return}if(k==='d'){padBuf=padBuf.slice(0,-1);drawPad();return}
+function padKey(k){if(padBusyFlag)return;if(k==='x'){closeSheet();render();return}if(k==='d'){padBuf=padBuf.slice(0,-1);drawPad();return}
 padBuf+=k;if(padBuf.length<4){drawPad();return}
-if(padBuf===PARENT_PIN){const cb=padCb;closeSheet();cb()}else{padBuf='';drawPad(true)}}
+const pin=padBuf,cb=padCb;padBusy(true);
+call({action:'auth',pin}).then(j=>{try{localStorage.setItem('salah-tok',j.tok)}catch(e){}closeSheet();cb()}).catch(e=>{padBuf='';drawPad(true,e.message==='locked'?'محاولات كثيرة — جرّب بعد ربع ساعة':e.message==='pin'?'الرقم غلط':'لازم إنترنت عشان نتأكد من الرقم')})}
+let padBusyFlag=false;function padBusy(b){padBusyFlag=b;const d=sheetIn.querySelector('.pad');if(d)d.style.opacity=b?'.4':'';const p=sheetIn.querySelector('p');if(p&&b)p.textContent='جاري التحقق…'}
 function toastLock(pk,s){const b=app.querySelector(`[data-p="${pk}"] .st`);if(b){b.textContent='باقي '+dur(s-Date.now());setTimeout(render,1800)}}
 function burst(){const b=document.getElementById('burst');b.innerHTML=[...Array(14)].map((_,i)=>{const a=i/14*Math.PI*2,r=120+Math.random()*80;return `<i style="left:50%;top:55%;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px">${star()}</i>`}).join('');setTimeout(()=>b.innerHTML='',1100)}
 app.addEventListener('click',e=>{const ow=e.target.closest('[data-own]');if(ow){const id=ow.dataset.own;openPad(id==='parents'?'جهاز الوالدين':'جهاز '+KIDS[id].n,()=>{setOwner(id);location.hash='';route()});return}
