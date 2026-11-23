@@ -82,6 +82,23 @@ td:first-child{text-align:start;white-space:nowrap}
 .shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .gear{width:44px;height:44px;border-radius:14px;background:var(--card);border:2px solid var(--line);display:grid;place-items:center;color:var(--soft)}
 button.kid{width:100%;text-align:start}
+.pts{background:var(--k);color:#fff;border-radius:22px;padding:14px 16px;margin:14px 0 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.pts b{font-size:38px;line-height:1}.pts .lv{font-size:17px;font-weight:800;text-align:end}.pts small{font-size:13px;opacity:.9}
+.bar{height:10px;border-radius:6px;background:#ffffff40;overflow:hidden;grid-column:1/-1}.bar i{display:block;height:100%;background:#fff;border-radius:6px}
+.ch{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:12px 14px;margin-bottom:10px;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.ch .ico{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--bg)}
+.ch .t{font-weight:800;font-size:17px;line-height:1.2}.ch .d2{font-size:13px;color:var(--soft)}
+.ch .rw{font-weight:800;color:var(--late);white-space:nowrap;font-size:15px}
+.ch .pb{grid-column:2/-1;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.ch .pb i{display:block;height:100%;background:var(--k)}
+.ch.won{border-color:var(--on);background:color-mix(in srgb,var(--on) 9%,var(--card))}.ch.won .pb i{background:var(--on)}.ch.won .rw{color:var(--on)}
+.sec{font-size:20px;font-weight:800;margin:16px 0 8px;display:flex;justify-content:space-between;align-items:baseline}.sec span{font-size:13px;color:var(--soft);font-weight:500}
+.win{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;background:#0009;padding:20px}.win.open{display:flex}
+.win .box{background:var(--card);border-radius:28px;padding:26px 20px;text-align:center;max-width:360px;width:100%}
+.win .box b{display:block;font-size:46px;color:var(--late);line-height:1.1}.win .box h2{margin:6px 0;font-size:26px}.win .box p{margin:0 0 16px;color:var(--soft)}
+.win .box button{background:var(--k);color:#fff;border-radius:18px;padding:12px 28px;font-size:19px;font-weight:800;min-height:52px}
+.rules{font-size:14px;color:var(--soft);background:var(--card);border:2px solid var(--line);border-radius:18px;padding:10px 14px;margin-top:10px}.rules summary{font-weight:800;color:var(--ink);cursor:pointer;min-height:32px}
+.rules ul{margin:6px 0 0;padding-inline-start:20px}
+.kpts{font-size:14px;font-weight:800;color:var(--ink)}
 .burst{position:fixed;pointer-events:none;inset:0;z-index:9}
 .burst i{position:absolute;width:26px;height:26px;animation:fly 1s ease-out forwards}
 @keyframes fly{from{transform:translate(0,0) scale(.4);opacity:1}to{transform:translate(var(--x),var(--y)) scale(1.2) rotate(200deg);opacity:0}}
@@ -92,6 +109,7 @@ button.kid{width:100%;text-align:start}
 <div class="wrap" id="app"></div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 <div class="burst" id="burst"></div>
+<div class="win" id="win"><div class="box" id="winBox"></div></div>
 <script>
 {
 const KIDS={mona:{n:'منى',c:'#0f8b8d',g:'الصف السادس',a:'م'},hamad:{n:'حمد',c:'#2f6fdb',g:'الصف الثالث',a:'ح'},reem:{n:'ريم',c:'#e2557b',g:'روضة — كي جي ٢',a:'ر',big:1}};
@@ -126,10 +144,33 @@ const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.
 const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
 let busy=false;
 async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
-async function pull(){if(!API)return;try{const j=await call({action:'all',since:shift(prayerDay(Date.now()),-30)});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render()}
+async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
 function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
 if(!API)loadNote='الحفظ على هذا الجهاز فقط';
 const sync=async()=>{await flush();await pull()};
+
+/* ---------- points & challenges ---------- */
+// عدّل الأرقام من هنا
+const POINTS={on:5,late:2,fajrBonus:3,fullDay:10};
+const LEVELS=[[0,'مبتدئ'],[150,'مثابر'],[400,'نجم'],[800,'بطل'],[1500,'بطل خارق'],[2500,'أسطورة']];
+const CH=[
+ {id:'full',t:'الأسبوع الذهبي',d:'كل الصلوات في وقتها ٧ أيام',goal:35,rw:100,v:w=>w.on,ic:'#f5b301'},
+ {id:'fajr',t:'بطل الفجر',d:'الفجر في وقته ٥ أيام',goal:5,rw:30,v:w=>w.fajr,ic:'#1f3a66'},
+ {id:'days',t:'يوم كامل',d:'٣ أيام كاملة في وقتها',goal:3,rw:20,v:w=>w.full,ic:'#1f9d55'},
+ {id:'all',t:'ولا صلاة فاتت',d:'صلّ الـ٣٥ صلاة كلها',goal:35,rw:20,v:w=>w.prayed,ic:'#e48a17'}];
+const dow=key=>{const[y,m,d]=key.split('-').map(Number);return new Date(Date.UTC(y,m-1,d)).getUTCDay()};
+const weekStart=key=>shift(key,-dow(key)); // الأسبوع يبدأ الأحد
+function dayPts(r){let s=0,n=0;for(const p of PR){const v=r[p.k];if(v==='on'){s+=POINTS.on+(p.k==='fajr'?POINTS.fajrBonus:0);n++}else if(v==='late')s+=POINTS.late}return s+(n===5?POINTS.fullDay:0)}
+function weekStats(kid,ws){const w={on:0,fajr:0,full:0,prayed:0,pts:0};for(let i=0;i<7;i++){const r=rec(kid,shift(ws,i));let n=0;for(const p of PR){if(r[p.k])w.prayed++;if(r[p.k]==='on'){w.on++;n++;if(p.k==='fajr')w.fajr++}}if(n===5)w.full++;w.pts+=dayPts(r)}
+w.ch=CH.map(c=>({...c,val:Math.min(c.goal,c.v(w)),won:c.v(w)>=c.goal}));w.bonus=w.ch.filter(c=>c.won).reduce((a,c)=>a+c.rw,0);return w}
+function totalPts(kid){const weeks=new Set();for(const id in data){const r=data[id];if(r&&r.kid===kid&&r.day)weeks.add(weekStart(r.day))}let t=0;for(const ws of weeks){const w=weekStats(kid,ws);t+=w.pts+w.bonus}return t}
+function level(t){let i=0;while(i+1<LEVELS.length&&t>=LEVELS[i+1][0])i++;const nx=LEVELS[i+1];return{name:LEVELS[i][1],next:nx,pct:nx?Math.round((t-LEVELS[i][0])/(nx[0]-LEVELS[i][0])*100):100}}
+const chIcon=c=>c.id==='fajr'?icon('fajr').replace('class="ic"','width="44" height="44"'):`<span style="width:30px;height:30px">${star(c.ic)}</span>`;
+let seen={};try{seen=JSON.parse(localStorage.getItem('salah-won')||'{}')}catch(e){}
+function checkWins(kid){if(!kid||!KIDS[kid]||owner!==kid)return;const ws=weekStart(prayerDay(Date.now())),w=weekStats(kid,ws);
+for(const c of w.ch){const k=kid+'_'+ws+'_'+c.id;if(c.won&&!seen[k]){seen[k]=1;try{localStorage.setItem('salah-won',JSON.stringify(seen))}catch(e){}showWin(c);return}}}
+function showWin(c){document.getElementById('winBox').innerHTML=`<div style="width:70px;height:70px;margin:0 auto">${star()}</div><h2>مبروك! خلّصت تحدي «${c.t}»</h2><b>+${c.rw}</b><p>نقطة زيادة لك هالأسبوع</p><button data-close>يا سلام!</button>`;document.getElementById('win').classList.add('open');burst();setTimeout(burst,500)}
+document.getElementById('win').addEventListener('click',e=>{if(e.target.closest('[data-close]')||e.target.id==='win')document.getElementById('win').classList.remove('open')});
 
 /* ---------- drawing ---------- */
 const star=(c='#f5b301')=>`<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z" fill="${c}"/></svg>`;
@@ -185,16 +226,20 @@ return `<div class="top">${owner==='parents'?'<a class="back" href="#parents" ar
 <div class="sky">${skySvg(day,off?0:now)}${next?`<span class="nxt">${next.n} بعد ${dur(w[next.k][0]-now)}</span>`:''}</div>
 <div class="daynav"><button id="prev" ${off>=6?'disabled':''} aria-label="اليوم اللي قبل">›</button><b>${off===0?'اليوم':off===1?'أمس':dn.w}<small>${dn.h} · ${dn.g}</small><small>صليت ${done} من 5</small></b><button id="nextd" ${off===0?'disabled':''} aria-label="اليوم اللي بعد">‹</button></div>
 <div class="${K.big?'big':''}">${cards}</div>
-<div class="score"><div><b>${ws.s}</b><span>نجومي هالأسبوع</span></div><div style="background:var(--on)"><b>${ws.on}</b><span>صلاة في وقتها</span></div></div>
-<p class="note">في وقتها = نجمتين · بعد وقتها = نجمة${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
+${(()=>{const t=totalPts(id),L=level(t),wk=weekStats(id,weekStart(today));
+return `<div class="pts"><div><b>${t}</b><small>نقاطي</small></div><div class="lv">${L.name}<br><small>${L.next?'باقي '+(L.next[0]-t)+' لـ'+L.next[1]:'أعلى مستوى!'}</small></div><div class="bar"><i style="width:${L.pct}%"></i></div></div>
+<div class="sec">تحديات هالأسبوع<span>هالأسبوع: ${wk.pts+wk.bonus} نقطة</span></div>
+${wk.ch.map(c=>`<div class="ch ${c.won?'won':''}"><span class="ico">${chIcon(c)}</span><span><span class="t">${c.won?'✓ ':''}${c.t}</span><br><span class="d2">${c.d} · ${c.val}/${c.goal}</span></span><span class="rw">+${c.rw}</span><span class="pb"><i style="width:${Math.round(c.val/c.goal*100)}%"></i></span></div>`).join('')}`})()}
+<details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
+<p class="note">الأسبوع يبدأ الأحد${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
 
 function parents(){const now=Date.now(),today=prayerDay(now);document.documentElement.style.setProperty('--k','#1d2433');
 const days=[...Array(7)].map((_,i)=>shift(today,-i));
 return `<div class="top"><h1>متابعة الأسبوع</h1><button class="gear" data-gear aria-label="الإعدادات"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button></div>
 <div class="legend"><span><i class="d on"></i>في وقتها</span><span><i class="d late"></i>بعد وقتها</span><span><i class="d"></i>ما انحطت</span></div>
 ${Object.entries(KIDS).map(([id,K])=>{const ws=weekStars(id,today),pct=Math.round(ws.on/35*100);
-return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22px;font-weight:800">${K.n} ‹</a><span>${ws.on} من 35 في وقتها (${pct}%) · ${ws.s} نجمة</span></h3>
-<table><thead><tr><th></th>${PR.map(p=>`<th>${p.n}</th>`).join('')}</tr></thead><tbody>
+return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22px;font-weight:800">${K.n} ‹</a><span class="kpts">${totalPts(id)} نقطة · ${level(totalPts(id)).name}</span></h3>
+<p style="margin:0 0 6px;font-size:13px;color:var(--soft)">آخر ٧ أيام: ${ws.on} من 35 في وقتها (${pct}%) · تحديات هالأسبوع: ${weekStats(id,weekStart(today)).ch.filter(c=>c.won).map(c=>c.t).join('، ')||'لسا'}</p><table><thead><tr><th></th>${PR.map(p=>`<th>${p.n}</th>`).join('')}</tr></thead><tbody>
 ${days.map((d,i)=>{const r=rec(id,d);return `<tr><td>${i===0?'اليوم':i===1?'أمس':dayName(d).w}</td>${PR.map(p=>`<td><i class="d ${r[p.k]||''}" title="${r[p.k]==='on'?'في وقتها':r[p.k]==='late'?'بعد وقتها':'—'}"></i></td>`).join('')}</tr>`}).join('')}
 </tbody></table></div>`}).join('')}
 <p class="note">اضغط على اسم أي واحد تفتح صفحته وتقدر تعدّل عليها · ${online?'متصل — يتحدث كل دقيقة من أجهزة العيال':loadNote||'جاري التحميل…'}</p>`}
@@ -228,7 +273,7 @@ const b=e.target.closest('[data-p]');if(b){openSheet(b.dataset.p);return}
 if(e.target.closest('#prev')&&off<6){off++;render()}if(e.target.closest('#nextd')&&off>0){off--;render()}});
 sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
 const v=o.dataset.v,{day,pk}=pending;closeSheet();
-if(v!=='x'){const cur={...rec(view,day),kid:view,day};if(v)cur[pk]=v;else delete cur[pk];save(view,day,cur);if(v==='on')burst()}
+if(v!=='x'){const cur={...rec(view,day),kid:view,day};if(v)cur[pk]=v;else delete cur[pk];save(view,day,cur);if(v==='on')burst();setTimeout(()=>checkWins(view),900)}
 render()});
 addEventListener('hashchange',route);
 setInterval(()=>{if(!sheet.classList.contains('open'))render()},30000);
