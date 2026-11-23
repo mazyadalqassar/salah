@@ -98,6 +98,17 @@ button.kid{width:100%;text-align:start}
 .win .box button{background:var(--k);color:#fff;border-radius:18px;padding:12px 28px;font-size:19px;font-weight:800;min-height:52px}
 .rules{font-size:14px;color:var(--soft);background:var(--card);border:2px solid var(--line);border-radius:18px;padding:10px 14px;margin-top:10px}.rules summary{font-weight:800;color:var(--ink);cursor:pointer;min-height:32px}
 .rules ul{margin:6px 0 0;padding-inline-start:20px}
+.shop{display:grid;gap:10px}
+.rw2{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:12px 14px;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.rw2 .ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:var(--bg)}
+.rw2 .t{font-weight:800;font-size:18px;line-height:1.2}.rw2 .c{font-size:14px;color:var(--late);font-weight:800}
+.rw2 .pb{grid-column:2/-1;height:8px;border-radius:5px;background:var(--line);overflow:hidden}.rw2 .pb i{display:block;height:100%;background:var(--late)}
+.btn{border-radius:14px;padding:8px 14px;font-weight:800;font-size:15px;min-height:44px;background:var(--k);color:#fff;white-space:nowrap}
+.btn.ghost{background:var(--bg);color:var(--soft);border:2px solid var(--line)}.btn.ok{background:var(--on)}.btn.no{background:var(--bg);color:#c0392b;border:2px solid var(--line)}
+.req{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}.req:first-child{border-top:0}.req .gr{flex:1;min-width:150px}
+.tag{font-size:13px;font-weight:800;border-radius:10px;padding:2px 10px;white-space:nowrap}.tag.pending{background:#fde7c3;color:#8a5a00}.tag.approved{background:#d4f2df;color:#13703a}.tag.rejected{background:var(--line);color:var(--soft)}
+.bal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.bal div{border-radius:20px;padding:12px;color:#fff;text-align:center}.bal b{display:block;font-size:30px;line-height:1.1}.bal span{font-size:15px;font-weight:800}.bal small{display:block;font-size:12px;opacity:.9}
 .kpts{font-size:14px;font-weight:800;color:var(--ink)}
 .burst{position:fixed;pointer-events:none;inset:0;z-index:9}
 .burst i{position:absolute;width:26px;height:26px;animation:fly 1s ease-out forwards}
@@ -143,8 +154,8 @@ try{data=JSON.parse(localStorage.getItem(LS)||'{}');q=JSON.parse(localStorage.ge
 const local=()=>{try{localStorage.setItem(LS,JSON.stringify(data));localStorage.setItem(LQ,JSON.stringify(q))}catch(e){}};
 const call=async params=>{const u=API+'?'+new URLSearchParams({key:KEY,...params});const r=await fetch(u,{redirect:'follow'});const j=await r.json();if(!j.ok)throw new Error(j.error);return j};
 let busy=false;
-async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
-async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
+async function flush(){if(!API||busy)return;busy=true;try{for(const id of Object.keys(q)){const rec=q[id];await call({action:'set',kid:rec.kid,day:rec.day,rec:JSON.stringify(rec)});if(q[id]===rec)delete q[id]}for(const id of Object.keys(rq)){const r=rq[id];await call({action:'rset',rec:JSON.stringify(r)});if(rq[id]===r)delete rq[id]}rlocal();online=true;loadNote=''}catch(e){online=false;loadNote='ما في اتصال — بينحفظ أول ما يرجع النت'}busy=false;local();render()}
+async function pull(){if(!API)return;try{const j=await call({action:'all',since:'2000-01-01'});for(const r of j.rows){if(KIDS[r.kid]&&!q[r.kid+'_'+r.day])data[r.kid+'_'+r.day]=r}try{const k=await call({action:'rlist'});const nR={};for(const r of k.rows)if(KIDS[r.kid])nR[r.id]=r;for(const id in rq)nR[id]=rq[id];R=nR;rlocal()}catch(e){}online=true;loadNote=Object.keys(q).length?'جاري الحفظ…':''}catch(e){online=false;loadNote='ما في اتصال — المعروض آخر نسخة محفوظة'}local();render();if(KIDS[view])checkWins(view)}
 function save(kid,day,obj){const id=kid+'_'+day;data[id]=obj;q[id]=obj;local();render();flush()}
 if(!API)loadNote='الحفظ على هذا الجهاز فقط';
 const sync=async()=>{await flush();await pull()};
@@ -166,6 +177,17 @@ w.ch=CH.map(c=>({...c,val:Math.min(c.goal,c.v(w)),won:c.v(w)>=c.goal}));w.bonus=
 function totalPts(kid){const weeks=new Set();for(const id in data){const r=data[id];if(r&&r.kid===kid&&r.day)weeks.add(weekStart(r.day))}let t=0;for(const ws of weeks){const w=weekStats(kid,ws);t+=w.pts+w.bonus}return t}
 function level(t){let i=0;while(i+1<LEVELS.length&&t>=LEVELS[i+1][0])i++;const nx=LEVELS[i+1];return{name:LEVELS[i][1],next:nx,pct:nx?Math.round((t-LEVELS[i][0])/(nx[0]-LEVELS[i][0])*100):100}}
 const chIcon=c=>c.id==='fajr'?icon('fajr').replace('class="ic"','width="44" height="44"'):`<span style="width:30px;height:30px">${star(c.ic)}</span>`;
+// متجر الجوائز — أضف جوائز جديدة هنا
+const REWARDS=[{id:'icecream',t:'طلعة آيس كريم',cost:300,ic:'#ff8fab'},{id:'toy',t:'لعبة',cost:1000,ic:'#2f6fdb'}];
+let R={},rq={};try{R=JSON.parse(localStorage.getItem('salah-r')||'{}');rq=JSON.parse(localStorage.getItem('salah-rq')||'{}')}catch(e){}
+const rlocal=()=>{try{localStorage.setItem('salah-r',JSON.stringify(R));localStorage.setItem('salah-rq',JSON.stringify(rq))}catch(e){}};
+const spent=kid=>Object.values(R).filter(r=>r.kid===kid&&(r.st==='pending'||r.st==='approved')).reduce((a,r)=>a+(+r.cost||0),0);
+const balance=kid=>totalPts(kid)-spent(kid);
+const reqs=kid=>Object.values(R).filter(r=>!kid||r.kid===kid).sort((a,b)=>(b.at||'').localeCompare(a.at||''));
+const nowStr=()=>{const k=new Date(Date.now()+TZ*H);return k.toISOString().slice(0,16).replace('T',' ')};
+function rsave(r){R[r.id]=r;rq[r.id]=r;rlocal();render();flush()}
+const ST_AR={pending:'تنتظر موافقة بابا وماما',approved:'تمت الموافقة',rejected:'مرفوضة'};
+const giftIcon=c=>`<svg viewBox="0 0 24 24" width="32" height="32"><rect x="3" y="9" width="18" height="12" rx="2" fill="${c}"/><rect x="2" y="7" width="20" height="4" rx="1.5" fill="${c}" opacity=".8"/><rect x="11" y="7" width="2" height="14" fill="#fff"/><path d="M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" fill="none" stroke="${c}" stroke-width="1.8"/></svg>`;
 let seen={};try{seen=JSON.parse(localStorage.getItem('salah-won')||'{}')}catch(e){}
 function checkWins(kid){if(!kid||!KIDS[kid]||owner!==kid)return;const ws=weekStart(prayerDay(Date.now())),w=weekStats(kid,ws);
 for(const c of w.ch){const k=kid+'_'+ws+'_'+c.id;if(c.won&&!seen[k]){seen[k]=1;try{localStorage.setItem('salah-won',JSON.stringify(seen))}catch(e){}showWin(c);return}}}
@@ -226,16 +248,26 @@ return `<div class="top">${owner==='parents'?'<a class="back" href="#parents" ar
 <div class="sky">${skySvg(day,off?0:now)}${next?`<span class="nxt">${next.n} بعد ${dur(w[next.k][0]-now)}</span>`:''}</div>
 <div class="daynav"><button id="prev" ${off>=6?'disabled':''} aria-label="اليوم اللي قبل">›</button><b>${off===0?'اليوم':off===1?'أمس':dn.w}<small>${dn.h} · ${dn.g}</small><small>صليت ${done} من 5</small></b><button id="nextd" ${off===0?'disabled':''} aria-label="اليوم اللي بعد">‹</button></div>
 <div class="${K.big?'big':''}">${cards}</div>
-${(()=>{const t=totalPts(id),L=level(t),wk=weekStats(id,weekStart(today));
-return `<div class="pts"><div><b>${t}</b><small>نقاطي</small></div><div class="lv">${L.name}<br><small>${L.next?'باقي '+(L.next[0]-t)+' لـ'+L.next[1]:'أعلى مستوى!'}</small></div><div class="bar"><i style="width:${L.pct}%"></i></div></div>
+${(()=>{const t=totalPts(id),L=level(t),wk=weekStats(id,weekStart(today)),bl=balance(id);
+return `<div class="pts"><div><b>${bl}</b><small>نقاطي${spent(id)?' · جمعت '+t+' وصرفت '+spent(id):''}</small></div><div class="lv">${L.name}<br><small>${L.next?'باقي '+(L.next[0]-t)+' لـ'+L.next[1]:'أعلى مستوى!'}</small></div><div class="bar"><i style="width:${L.pct}%"></i></div></div>
 <div class="sec">تحديات هالأسبوع<span>هالأسبوع: ${wk.pts+wk.bonus} نقطة</span></div>
 ${wk.ch.map(c=>`<div class="ch ${c.won?'won':''}"><span class="ico">${chIcon(c)}</span><span><span class="t">${c.won?'✓ ':''}${c.t}</span><br><span class="d2">${c.d} · ${c.val}/${c.goal}</span></span><span class="rw">+${c.rw}</span><span class="pb"><i style="width:${Math.round(c.val/c.goal*100)}%"></i></span></div>`).join('')}`})()}
+<div class="sec">متجر الجوائز<span>رصيدي: ${balance(id)} نقطة</span></div>
+<div class="shop">${REWARDS.map(w=>{const bl=balance(id),pend=reqs(id).some(r=>(r.rw===w.id||r.t===w.t)&&r.st==='pending'),can=bl>=w.cost;
+return `<div class="rw2"><span class="ico">${giftIcon(w.ic)}</span><span><span class="t">${w.t}</span><br><span class="c">${w.cost} نقطة</span></span>${pend?'<span class="tag pending">بالانتظار</span>':can?`<button class="btn" data-rw="${w.id}">أبيها!</button>`:`<span class="tag rejected">باقي ${w.cost-bl}</span>`}<span class="pb"><i style="width:${Math.min(100,Math.round(Math.max(0,bl)/w.cost*100))}%"></i></span></div>`}).join('')}</div>
+${reqs(id).length?`<div class="grid" style="margin-top:10px"><h3 style="font-size:17px">طلباتي</h3>${reqs(id).slice(0,5).map(r=>`<div class="req"><span class="gr">${r.t} · ${r.cost} نقطة</span><span class="tag ${r.st}">${ST_AR[r.st]}</span></div>`).join('')}</div>`:''}
 <details class="rules"><summary>شلون أجمع النقاط؟</summary><ul><li>صلاة في وقتها: ${POINTS.on} نقاط</li><li>الفجر في وقته: ${POINTS.fajrBonus} نقاط زيادة</li><li>صلاة بعد وقتها: ${POINTS.late} نقطة</li><li>يوم كامل (٥ صلوات في وقتها): ${POINTS.fullDay} نقاط زيادة</li><li>كل تحدي تخلّصه بالأسبوع له جائزته</li></ul></details>
 <p class="note">الأسبوع يبدأ الأحد${loadNote?' · '+loadNote:online?' · بابا يشوف تقدمك ✓':''}</p>`}
 
 function parents(){const now=Date.now(),today=prayerDay(now);document.documentElement.style.setProperty('--k','#1d2433');
 const days=[...Array(7)].map((_,i)=>shift(today,-i));
 return `<div class="top"><h1>متابعة الأسبوع</h1><button class="gear" data-gear aria-label="الإعدادات"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button></div>
+<div class="bal">${Object.entries(KIDS).map(([id,K])=>`<div style="background:${K.c}"><span>${K.n}</span><b>${balance(id)}</b><small>نقطة رصيد</small><small>جمع ${totalPts(id)} · صرف ${spent(id)}</small></div>`).join('')}</div>
+${(()=>{const pend=reqs().filter(r=>r.st==='pending'),old=reqs().filter(r=>r.st!=='pending').slice(0,6);
+return `<div class="grid"><h3>طلبات الجوائز<span>${pend.length?pend.length+' تنتظر ردكم':'ما في طلبات جديدة'}</span></h3>
+${pend.map(r=>`<div class="req"><span class="gr"><b style="color:${KIDS[r.kid].c}">${KIDS[r.kid].n}</b> تبي ${r.t} · ${r.cost} نقطة</span><button class="btn ok" data-ap="${r.id}">موافق</button><button class="btn no" data-rj="${r.id}">رفض</button></div>`).join('')}
+${old.map(r=>`<div class="req"><span class="gr">${KIDS[r.kid].n} · ${r.t} · ${r.cost}</span><span class="tag ${r.st}">${ST_AR[r.st]==='تنتظر موافقة بابا وماما'?'بالانتظار':ST_AR[r.st]}</span></div>`).join('')}
+<p style="margin:8px 0 0;font-size:13px;color:var(--soft)">الرفض يرجّع النقاط للرصيد.</p></div>`})()}
 <div class="legend"><span><i class="d on"></i>في وقتها</span><span><i class="d late"></i>بعد وقتها</span><span><i class="d"></i>ما انحطت</span></div>
 ${Object.entries(KIDS).map(([id,K])=>{const ws=weekStars(id,today),pct=Math.round(ws.on/35*100);
 return `<div class="grid"><h3><a href="#${id}" style="color:${K.c};font-size:22px;font-weight:800">${K.n} ‹</a><span class="kpts">${totalPts(id)} نقطة · ${level(totalPts(id)).name}</span></h3>
@@ -256,7 +288,11 @@ sheetIn.innerHTML=`<h2>صلاة ${p.n}</h2><p>${K.big?'متى صليتي؟':'و�
 <button class="opt o2 ${sug==='late'?'sug':''}" data-v="late"><span style="width:44px;height:44px">${star('#e48a17')}</span><span>صليتها بعد وقتها<small>بعد ما طلع الوقت</small></span></button>
 ${v?'<button class="opt clr" data-v="">شيل العلامة</button>':''}<button class="opt clr" data-v="x">إلغاء</button>`;
 sheet.classList.add('open')}
-function closeSheet(){sheet.classList.remove('open');pending=null;padCb=null}
+function closeSheet(){sheet.classList.remove('open');pending=null;padCb=null;rwAsk=null}
+let rwAsk=null;
+function askReward(wid){const w=REWARDS.find(x=>x.id===wid);if(!w||balance(view)<w.cost)return;closeSheet();rwAsk=w;
+sheetIn.innerHTML=`<div style="width:64px;height:64px;margin:0 auto;display:grid;place-items:center">${giftIcon(w.ic)}</div><h2 style="text-align:center">تبي ${w.t}؟</h2><p style="text-align:center">بنصرف ${w.cost} نقطة من رصيدك (${balance(view)})، وبابا وماما لازم يوافقون.</p>
+<button class="opt o1 sug" data-rc="yes"><span>إيه أبيها!</span></button><button class="opt clr" data-rc="no">لا، بعدين</button>`;sheet.classList.add('open')}
 let padCb=null,padBuf='',padTitle='';
 function openPad(title,cb){closeSheet();padCb=cb;padBuf='';padTitle=title;drawPad();sheet.classList.add('open')}
 function drawPad(bad){sheetIn.innerHTML=`<h2 style="text-align:center">${padTitle}</h2><p style="text-align:center">الرقم السري للوالدين</p>
@@ -269,9 +305,11 @@ function toastLock(pk,s){const b=app.querySelector(`[data-p="${pk}"] .st`);if(b)
 function burst(){const b=document.getElementById('burst');b.innerHTML=[...Array(14)].map((_,i)=>{const a=i/14*Math.PI*2,r=120+Math.random()*80;return `<i style="left:50%;top:55%;--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px">${star()}</i>`}).join('');setTimeout(()=>b.innerHTML='',1100)}
 app.addEventListener('click',e=>{const ow=e.target.closest('[data-own]');if(ow){const id=ow.dataset.own;openPad(id==='parents'?'جهاز الوالدين':'جهاز '+KIDS[id].n,()=>{setOwner(id);location.hash='';route()});return}
 if(e.target.closest('[data-gear]')){openPad('تغيير صاحب الجهاز',()=>{setOwner(null);location.hash='';route()});return}
+const rb=e.target.closest('[data-rw]');if(rb){askReward(rb.dataset.rw);return}
+const ap=e.target.closest('[data-ap],[data-rj]');if(ap&&owner==='parents'){const r=R[ap.dataset.ap||ap.dataset.rj];if(r)rsave({...r,st:ap.dataset.ap?'approved':'rejected'});return}
 const b=e.target.closest('[data-p]');if(b){openSheet(b.dataset.p);return}
 if(e.target.closest('#prev')&&off<6){off++;render()}if(e.target.closest('#nextd')&&off>0){off--;render()}});
-sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
+sheet.addEventListener('click',e=>{if(e.target===sheet){closeSheet();render();return}const kb=e.target.closest('[data-k]');if(kb&&padCb){padKey(kb.dataset.k);return}const rc=e.target.closest('[data-rc]');if(rc&&rwAsk){const w=rwAsk;closeSheet();if(rc.dataset.rc==='yes'){rsave({id:view+'-'+Date.now().toString(36),kid:view,rw:w.id,t:w.t,cost:w.cost,st:'pending',at:nowStr()});burst()}render();return}const o=e.target.closest('[data-v]');if(!o||!pending)return;
 const v=o.dataset.v,{day,pk}=pending;closeSheet();
 if(v!=='x'){const cur={...rec(view,day),kid:view,day};if(v)cur[pk]=v;else delete cur[pk];save(view,day,cur);if(v==='on')burst();setTimeout(()=>checkWins(view),900)}
 render()});
